@@ -7,7 +7,7 @@ This repository contains code for reproducing the [Stanford Alpaca](https://gith
 We provide an Instruct model of similar quality to `text-davinci-003` that can run [on a Raspberry Pi](https://twitter.com/miolini/status/1634982361757790209) (for research),
 and the code is easily extended to the `13b`, `30b`, and `65b` models.
 
-In addition to the training code, which runs within five hours on a single RTX 4090,
+In addition to the training code, which runs within hours on a single RTX 4090,
 we publish a script for downloading and inference on the foundation model and LoRA,
 as well as the resulting [LoRA weights themselves](https://huggingface.co/tloen/alpaca-lora-7b/tree/main).
 To fine-tune cheaply and efficiently, we use Hugging Face's [PEFT](https://github.com/huggingface/peft)
@@ -22,18 +22,6 @@ Without hyperparameter tuning, the LoRA model produces outputs comparable to the
    ```bash
    pip install -r requirements.txt
    ```
-
-1. Set environment variables, or modify the files referencing `BASE_MODEL`:
-
-   ```bash
-   # Files referencing `BASE_MODEL`
-   # export_hf_checkpoint.py
-   # export_state_dict_checkpoint.py
-
-   export BASE_MODEL=decapoda-research/llama-7b-hf
-   ```
-
-   Both `finetune.py` and `generate.py` use `--base_model` flag as shown further below.
 
 1. If bitsandbytes doesn't work, [install it from source.](https://github.com/TimDettmers/bitsandbytes/blob/main/compile_from_source.md) Windows users can follow [these instructions](https://github.com/tloen/alpaca-lora/issues/17).
 
@@ -86,6 +74,22 @@ python generate.py \
     --lora_weights 'tloen/alpaca-lora-7b'
 ```
 
+### Official weights
+
+The most recent "official" Alpaca-LoRA adapter available at [`tloen/alpaca-lora-7b`](https://huggingface.co/tloen/alpaca-lora-7b) was trained on March 26 with the following command:
+
+```bash
+python finetune.py \
+    --base_model='decapoda-research/llama-7b-hf' \
+    --num_epochs=10 \
+    --cutoff_len=512 \
+    --group_by_length \
+    --output_dir='./lora-alpaca' \
+    --lora_target_modules='[q_proj,k_proj,v_proj,o_proj]' \
+    --lora_r=16 \
+    --micro_batch_size=8
+```
+
 ### Checkpoint export (`export_*_checkpoint.py`)
 
 These files contain scripts that merge the LoRA weights back into the base model
@@ -96,22 +100,22 @@ or [alpaca.cpp](https://github.com/antimatter15/alpaca.cpp).
 
 ### Docker Setup & Inference
 
-1. Build the container image
+1. Build the container image:
 
-```
+```bash
 docker build -t alpaca-lora .
 ```
 
-2. Run the container (you can also use `finetune.py` and all of its parameters as shown above for training.
+2. Run the container (you can also use `finetune.py` and all of its parameters as shown above for training):
 
-```
+```bash
 docker run --gpus=all --shm-size 64g -p 7860:7860 -v ${HOME}/.cache:/root/.cache --rm alpaca-lora generate.py \
     --load_8bit \
     --base_model 'decapoda-research/llama-7b-hf' \
     --lora_weights 'tloen/alpaca-lora-7b'
 ```
 
-3. Head on down to `localhost:7860` and enjoy!
+3. Open `https://localhost:7860` in the browser
 
 ### Docker Compose Setup & Inference
 
@@ -119,21 +123,21 @@ docker run --gpus=all --shm-size 64g -p 7860:7860 -v ${HOME}/.cache:/root/.cache
 
 2. Build and run the container
 
-```
+```bash
 docker-compose up -d --build
 ```
 
-3. Head on down to `localhost:7860` and enjoy!
+3. Open `https://localhost:7860` in the browser
 
-4. See logs
+4. See logs:
 
-```
+```bash
 docker-compose logs -f
 ```
 
-5. Clean everything up
+5. Clean everything up:
 
-```
+```bash
 docker-compose down --volumes --rmi all
 ```
 
