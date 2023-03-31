@@ -124,6 +124,7 @@ docker run --gpus=all --shm-size 64g -p 7860:7860 -v ${HOME}/.cache:/root/.cache
 2. Build and run the container
 
 ```bash
+export BASE_MODEL='decapoda-research/llama-7b-hf'
 docker-compose up -d --build
 ```
 
